@@ -19,6 +19,7 @@ print(f'len dictionary: {len(sequences)}')
 print(f'id: {((sequences[0])["query"]).split(":")[1]}')
 print(f'comment: {((sequences[0])["results"][0])["comment"]}')
 
+
 if __name__ == '__main__':
     pass
 

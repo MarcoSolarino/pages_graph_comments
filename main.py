@@ -2,7 +2,9 @@ import os
 import json
 import networkx as nx
 import re
-from collections import Counter
+import numpy as np
+import sys
+# from collections import Counter
 
 
 path = 'sequences/sequences/'
@@ -22,13 +24,13 @@ def get_sequences():
 
 def generate_graph():
     sequences = get_sequences()
-    graph = nx.Graph()
+    graph = nx.Graph()  # empty directed graph
 
     ids = [(s["query"]).split(":")[1] for s in sequences]  # get all ids
     graph.add_nodes_from(ids)  # add all nodes at once
 
     edges = find_edges(sequences)
-    counter = Counter(edges)
+    # counter = Counter(edges)
     graph.add_edges_from(edges)  # add all edges at once
     return graph
 
@@ -54,6 +56,27 @@ def filter_id(n):
         return False
 
 
+def bron_kerbosch(p, r=np.empty(0), x=np.empty(0)):
+    if len(p) == 0 and len(x) == 0:
+        print(f'Maximal clique: {r}')
+    # p is list(g.nodes()) at first iter.
+    for v in p:
+        new_p = np.intersect1d(p, np.array(list(g.neighbors(v))))
+        new_x = np.intersect1d(x, np.array(list(g.neighbors(v))))
+        bron_kerbosch(new_p, np.append(r, v), new_x)
+        p = np.delete(p, np.where(p == v))
+        x = np.append(x, v)
+
+
 if __name__ == '__main__':
+    sys.setrecursionlimit(30000)
     g = generate_graph()
+    # for n in g.nodes():
+    #     neighbors = g.neighbors(n)
+    #     for neigh in neighbors:
+    #         print(neigh)
     print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
+    subgraph_nodes = np.random.choice(list(g.nodes()), 100)
+    subgraph = g.subgraph(subgraph_nodes)
+    bron_kerbosch(list(subgraph.nodes()))
+

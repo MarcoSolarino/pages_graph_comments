@@ -4,16 +4,16 @@ import networkx as nx
 import re
 import numpy as np
 import sys
-# from collections import Counter
 
 
 path = 'sequences/sequences/'
 
 
-def get_sequences():
+def get_sequences(limit=100):
     # get all sequences names
     filenames = [filename for filename in os.listdir(path)]
-
+    if limit is not None:
+        filenames = filenames[0:limit]
     # build sequences dictionaries
     sequences = []
     for f in filenames:
@@ -22,8 +22,8 @@ def get_sequences():
     return sequences
 
 
-def generate_graph():
-    sequences = get_sequences()
+def generate_graph(limit=100):
+    sequences = get_sequences(limit)
     graph = nx.Graph()  # empty directed graph
 
     ids = [(s["query"]).split(":")[1] for s in sequences]  # get all ids
@@ -58,7 +58,9 @@ def filter_id(n):
 
 def bron_kerbosch(p, r=np.empty(0), x=np.empty(0)):
     if len(p) == 0 and len(x) == 0:
-        print(f'Maximal clique: {r}')
+        if len(r) > 2:
+            print(f'Maximal clique: {r}')
+            return
     # p is list(g.nodes()) at first iter.
     for v in p:
         new_p = np.intersect1d(p, np.array(list(g.neighbors(v))))
@@ -68,15 +70,42 @@ def bron_kerbosch(p, r=np.empty(0), x=np.empty(0)):
         x = np.append(x, v)
 
 
+def find_pivot(p, x):
+    pux = np.union1d(p, x)
+    num_neighbors = 0
+    pivot = None
+    for p in pux:
+        if len(list(p.neighbors)) >= num_neighbors:
+            pivot = p
+            num_neighbors = len(list(p.neighbors))
+    return pivot
+
+
+def bron_kerbosch_with_pivot(p, r=np.empty(0), x=np.empty(0)):
+    if len(p) == 0 and len(x) == 0:
+        if len(r) > 2:
+            print(f'Maximal clique: {r}')
+            return
+    # p is list(g.nodes()) at first iter.
+    pivot = find_pivot(p, x)
+    for v in np.delete(p, pivot):
+        new_p = np.intersect1d(p, np.array(list(g.neighbors(v))))
+        new_x = np.intersect1d(x, np.array(list(g.neighbors(v))))
+        bron_kerbosch(new_p, np.append(r, v), new_x)
+        p = np.delete(p, np.where(p == v))
+        x = np.append(x, v)
+
+
 if __name__ == '__main__':
-    sys.setrecursionlimit(30000)
+    sys.setrecursionlimit(2000)
     g = generate_graph()
     # for n in g.nodes():
     #     neighbors = g.neighbors(n)
     #     for neigh in neighbors:
     #         print(neigh)
     print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
-    subgraph_nodes = np.random.choice(list(g.nodes()), 100)
-    subgraph = g.subgraph(subgraph_nodes)
-    bron_kerbosch(list(subgraph.nodes()))
+    # subgraph_nodes = np.random.choice(list(g.nodes()), 1000)
+    # subgraph = g.subgraph(subgraph_nodes)
+    # print(f'subgraph edges: {list(subgraph.edges())}')
+    bron_kerbosch(list(g.nodes()))
 

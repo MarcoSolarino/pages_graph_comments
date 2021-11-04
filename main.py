@@ -74,10 +74,10 @@ def find_pivot(p, x):
     pux = np.union1d(p, x)
     num_neighbors = 0
     pivot = None
-    for p in pux:
-        if len(list(p.neighbors)) >= num_neighbors:
-            pivot = p
-            num_neighbors = len(list(p.neighbors))
+    for node in pux:
+        if len(list(g.neighbors(node))) >= num_neighbors:
+            pivot = node
+            num_neighbors = len(list(g.neighbors(node)))
     return pivot
 
 
@@ -88,7 +88,7 @@ def bron_kerbosch_with_pivot(p, r=np.empty(0), x=np.empty(0)):
             return
     # p is list(g.nodes()) at first iter.
     pivot = find_pivot(p, x)
-    for v in np.delete(p, pivot):
+    for v in np.delete(p, np.where(p == pivot)):
         new_p = np.intersect1d(p, np.array(list(g.neighbors(v))))
         new_x = np.intersect1d(x, np.array(list(g.neighbors(v))))
         bron_kerbosch(new_p, np.append(r, v), new_x)
@@ -107,5 +107,6 @@ if __name__ == '__main__':
     # subgraph_nodes = np.random.choice(list(g.nodes()), 1000)
     # subgraph = g.subgraph(subgraph_nodes)
     # print(f'subgraph edges: {list(subgraph.edges())}')
-    bron_kerbosch(list(g.nodes()))
+    # bron_kerbosch(list(g.nodes()))
+    bron_kerbosch_with_pivot(list(g.nodes()))
 

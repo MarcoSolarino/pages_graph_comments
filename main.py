@@ -14,7 +14,7 @@ def get_sequences(limit):
     # get all sequences names
     filenames = np.array([filename for filename in os.listdir(path)])
     if limit is not None:
-        filenames = filenames[0:limit]
+        filenames = np.random.choice(filenames, size=limit, replace=False)
     # build sequences dictionaries
     sequences = np.empty(0)
     for f in filenames:
@@ -23,7 +23,7 @@ def get_sequences(limit):
     return sequences
 
 
-def generate_graph(limit=100):
+def generate_graph(limit=1000):
     sequences = get_sequences(limit)
     graph = nx.Graph()  # empty directed graph
 
@@ -94,14 +94,48 @@ def bron_kerbosch_with_pivot(graph, p, r=np.empty(0), x=np.empty(0)):
     return
 
 
+def degeneracy_order(graph):
+    d = 1
+    while d <= graph.number_of_nodes():
+        print(f'order {d}')
+        subgraph = graph.copy()
+        deg_order = np.empty(0)
+
+        while subgraph is not None:
+            # np array that stores node indexes and their num of neighbors
+            num_neighbors = np.array(
+                [(node, len(list(subgraph.neighbors(node)))) for node in (subgraph.nodes())])
+            # deleting nodes with more num_neighbors > d
+            num_neighbors = np.delete(num_neighbors, np.where(num_neighbors[:, 1] > d)[0], axis=0)
+            if len(num_neighbors) == 0:
+                subgraph = subgraph.clear()
+                deg_order = np.empty(0)
+            else:
+                num_neighbors = np.sort(num_neighbors, axis=1)
+                id, __ = num_neighbors[-1]
+                deg_order = np.append(deg_order, id)
+
+                # remove node from graph
+                subgraph.remove_node(id)
+        if deg_order.any():
+            return deg_order
+        d += 1
+
+
 if __name__ == '__main__':
     # sys.setrecursionlimit(3000)
-    # g = generate_graph(None)
+    # g = generate_graph()
     # print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
     # maximal_c1 = nx.find_cliques(g)
     # maximal_c1 = [mc for mc in maximal_c1 if len(mc) > 2]
-    # bron_kerbosch(p=list(g.nodes()))
     # print(len(list(maximal_c1)))
+
+    # cc = sorted(nx.connected_components(g), key=len, reverse=True)
+    # print(cc)
+    # nx.draw(g)
+    # plt.show()
+    # bron_kerbosch(g, p=list(g.nodes()))
+
     random_graph = nx.fast_gnp_random_graph(8, 0.65)
     nx.draw(random_graph, with_labels=True)
     plt.show()
@@ -109,3 +143,8 @@ if __name__ == '__main__':
     bron_kerbosch(graph=random_graph, p=list(random_graph.nodes()))
     print('\nbk2:')
     bron_kerbosch_with_pivot(graph=random_graph, p=list(random_graph.nodes()))
+    #
+    # cc = sorted(nx.connected_components(random_graph), key=len, reverse=True)
+    # print(cc)
+
+    print(degeneracy_order(random_graph))

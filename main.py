@@ -97,7 +97,7 @@ def bron_kerbosch_with_pivot(graph, p, r=np.empty(0), x=np.empty(0)):
 def degeneracy_order(graph):
     d = 1
     while d <= graph.number_of_nodes():
-        print(f'order {d}')
+        # print(f'order {d}')
         subgraph = graph.copy()
         deg_order = np.empty(0)
 
@@ -124,6 +124,18 @@ def degeneracy_order(graph):
         d += 1
 
 
+def bron_kerbosch_degeneracy(graph):
+    deg_order = degeneracy_order(graph)
+    nodes = np.array(list(graph.nodes))
+    for v in deg_order:
+        v_neighbors = np.array(list(graph.neighbors(v)))
+        first_half_nodes, second_half_nodes = np.hsplit(nodes, np.where(nodes == v)[0])
+        second_half_nodes = np.delete(second_half_nodes, np.where(second_half_nodes == v))
+        p = np.intersect1d(v_neighbors, first_half_nodes)
+        x = np.intersect1d(v_neighbors, second_half_nodes)
+        bron_kerbosch_with_pivot(graph, p, v, x)
+
+
 if __name__ == '__main__':
     # sys.setrecursionlimit(3000)
     # g = generate_graph()
@@ -145,8 +157,8 @@ if __name__ == '__main__':
     bron_kerbosch(graph=random_graph, p=list(random_graph.nodes()))
     print('\nbk2:')
     bron_kerbosch_with_pivot(graph=random_graph, p=list(random_graph.nodes()))
+    print('\nbk3')
+    bron_kerbosch_degeneracy(random_graph)
     #
     # cc = sorted(nx.connected_components(random_graph), key=len, reverse=True)
     # print(cc)
-
-    print(degeneracy_order(random_graph))

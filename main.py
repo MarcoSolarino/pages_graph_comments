@@ -108,15 +108,17 @@ def degeneracy_order(graph):
             # deleting nodes with more num_neighbors > d
             num_neighbors = np.delete(num_neighbors, np.where(num_neighbors[:, 1] > d)[0], axis=0)
             if len(num_neighbors) == 0:
-                subgraph = subgraph.clear()
+                subgraph = None
                 deg_order = np.empty(0)
             else:
-                num_neighbors = np.sort(num_neighbors, axis=1)
+                num_neighbors = np.sort(num_neighbors, axis=0)
                 id, __ = num_neighbors[-1]
                 deg_order = np.append(deg_order, id)
 
                 # remove node from graph
                 subgraph.remove_node(id)
+                if len(list(subgraph.nodes())) == 0:
+                    subgraph = None
         if deg_order.any():
             return deg_order
         d += 1

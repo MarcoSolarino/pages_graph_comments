@@ -4,6 +4,7 @@ import networkx as nx
 import re
 import numpy as np
 import matplotlib.pyplot as plt
+import time
 import sys
 
 
@@ -50,9 +51,9 @@ def find_edges(ids, sequences):
     return edges
 
 
-def bron_kerbosch(graph, p, r=np.empty(0), x=np.empty(0)):
+def bron_kerbosch(graph, p, r=np.empty(0), x=np.empty(0), verbose=True):
     if len(p) == 0 and len(x) == 0:
-        if len(r) > 2:
+        if len(r) > 2 and verbose:
             print(f'Maximal clique: {r}')
         return
 
@@ -60,7 +61,7 @@ def bron_kerbosch(graph, p, r=np.empty(0), x=np.empty(0)):
         new_r = np.union1d(r, v)
         new_p = np.intersect1d(p, np.array(list(graph.neighbors(v))))
         new_x = np.intersect1d(x, np.array(list(graph.neighbors(v))))
-        bron_kerbosch(graph, new_p, new_r, new_x)
+        bron_kerbosch(graph, new_p, new_r, new_x, verbose=verbose)
         p = np.delete(p, np.where(p == v))
         x = np.union1d(x, v)
     return
@@ -78,14 +79,14 @@ def find_pivot(graph, p, x):
     return pivot
 
 
-def bron_kerbosch_with_pivot(graph, p, r=np.empty(0), x=np.empty(0)):
+def bron_kerbosch_with_pivot(graph, p, r=np.empty(0), x=np.empty(0), verbose=True):
     if len(p) == 0 and len(x) == 0:
-        if len(r) > 2:
+        if len(r) > 2 and verbose:
             print(f'Maximal clique: {r}')
         return
 
     pivot = find_pivot(graph, p, x)
-    for v in np.delete(p, np.where(p == pivot)):
+    for v in np.setdiff1d(p, list(graph.neighbors(pivot))):
         new_p = np.intersect1d(p, np.array(list(graph.neighbors(v))))
         new_x = np.intersect1d(x, np.array(list(graph.neighbors(v))))
         bron_kerbosch(graph, new_p, np.union1d(r, v), new_x)
@@ -136,6 +137,27 @@ def bron_kerbosch_degeneracy(graph):
         bron_kerbosch_with_pivot(graph, p, v, x)
 
 
+def get_max_clique(graph, p, r=np.empty(0), x=np.empty(0)):
+    if len(p) == 0 and len(x) == 0:
+        return r
+
+    max_clique = np.empty(0)
+    pivot = find_pivot(graph, p, x)
+    for v in np.setdiff1d(p, list(graph.neighbors(pivot))):
+        new_p = np.intersect1d(p, np.array(list(graph.neighbors(v))))
+        new_x = np.intersect1d(x, np.array(list(graph.neighbors(v))))
+        clique = get_max_clique(graph, new_p, np.union1d(r, v), new_x)
+        if len(clique) > len(max_clique):
+            max_clique = clique
+        p = np.delete(p, np.where(p == v))
+        x = np.union1d(x, v)
+    return max_clique
+
+
+def get_max_clique2(graph):
+    pass
+
+
 if __name__ == '__main__':
     # sys.setrecursionlimit(3000)
     # g = generate_graph()
@@ -150,15 +172,26 @@ if __name__ == '__main__':
     # plt.show()
     # bron_kerbosch(g, p=list(g.nodes()))
 
-    random_graph = nx.fast_gnp_random_graph(8, 0.65)
+    random_graph = nx.fast_gnp_random_graph(10, 0.65)
     nx.draw(random_graph, with_labels=True)
     plt.show()
+
     print('bk1:')
+    start = time.time()
     bron_kerbosch(graph=random_graph, p=list(random_graph.nodes()))
+    print(f'\nTime: {time.time() - start} s')
     print('\nbk2:')
+    start = time.time()
     bron_kerbosch_with_pivot(graph=random_graph, p=list(random_graph.nodes()))
+    print(f'\nTime: {time.time() - start} s')
     print('\nbk3')
+    start = time.time()
     bron_kerbosch_degeneracy(random_graph)
+    print(f'\nTime: {time.time() - start} s')
+
+    mc = get_max_clique(random_graph, p=list(random_graph.nodes()))
+    # mc = get_max_clique2(random_graph)
+    print(f'\nMax Clique: {mc}')
     #
     # cc = sorted(nx.connected_components(random_graph), key=len, reverse=True)
     # print(cc)

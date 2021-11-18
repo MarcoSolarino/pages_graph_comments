@@ -158,6 +158,7 @@ def get_max_clique2(graph):
     pass
 
 
+
 if __name__ == '__main__':
     # sys.setrecursionlimit(3000)
     # g = generate_graph()

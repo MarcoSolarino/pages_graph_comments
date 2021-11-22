@@ -1,11 +1,14 @@
 import os
 import json
+import random
+
 import networkx as nx
 import re
 import numpy as np
 import matplotlib.pyplot as plt
 import time
 import sys
+import collections
 
 
 path = 'sequences/sequences/'
@@ -19,7 +22,7 @@ def get_sequences(limit):
     """
     # get all sequences names
     filenames = np.array([filename for filename in os.listdir(path)])
-    if limit is not None:
+    if limit != 0:
         filenames = np.random.choice(filenames, size=limit, replace=False)
     # build sequences dictionaries
     sequences = np.empty(0)
@@ -61,8 +64,8 @@ def find_edges(ids, sequences):
             for c in comments:
                 references = re.findall('A[0-9]{6}', c)
                 for n in references:
-                    # check if the reference is a node in the graph
-                    if n in ids:
+                    # check if the reference is a node in the graph and if it is not a self reference
+                    if n in ids and qid != str(n):
                         edges = np.append(edges, [[qid, str(n)]], axis=0)
     return edges
 
@@ -171,6 +174,19 @@ def degeneracy_order(graph):
         d += 1
 
 
+def deg_order_hash(graph):
+    hash_neighbors = {}
+    num_neighbors = np.array(
+        [(len(list(graph.neighbors(node))), node) for node in (graph.nodes())])
+    for n in num_neighbors:
+        if n[0] in hash_neighbors:
+            hash_neighbors[n[0]] = np.append(hash_neighbors[n[0]], [n[1]])
+        else:
+            hash_neighbors[n[0]] = np.array([n[1]])
+    hash_neighbors = sorted(hash_neighbors.items())
+    print('ciao')
+
+
 def bron_kerbosch_degeneracy(graph):
     """
     Executes Bron-Kerbosch algorithm using a degeneracy order of the graph
@@ -217,9 +233,6 @@ def get_max_clique2(graph):
     """
     Search a max clique between all maximal cliques using Bron-Kerbosch using a degeneracy order.
     :param graph: networkx graph
-    :param p: list of nodes
-    :param r: list of nodes candidates to be a maximal clique
-    :param x: list of nodes already explored
     :return: ndarray of a max clique
     """
     max_clique = np.empty(0)
@@ -238,23 +251,45 @@ def get_max_clique2(graph):
 
 
 if __name__ == '__main__':
-    # sys.setrecursionlimit(3000)
-    g = generate_graph(None)
-    g.remove_nodes_from(list(nx.isolates(g)))
-    print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
-    maximal_c1 = nx.find_cliques(g)
-    maximal_c1 = [mc for mc in maximal_c1 if len(mc) > 2]
-    print(len(list(maximal_c1)))
+    # generate graph and write it
 
-    # cc = sorted(nx.connected_components(g), key=len, reverse=True)
-    # print(cc)
-    # nx.draw(g)
-    # plt.show()
-    # bron_kerbosch(g, p=list(g.nodes()))
+    # g = generate_graph(0)
+    # g.remove_nodes_from(list(nx.isolates(g)))
+    # print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
+    # nx.readwrite.write_adjlist(g, 'graph/big_graph.adjlist')
 
-    # random_graph = nx.fast_gnp_random_graph(100, 0.5)
-    # nx.draw(random_graph, with_labels=True)
+    # ------------------------------------------------------------------------------------------------------------------
+    # read graph and execute bron-kerbosch
+
+    # g = nx.readwrite.read_adjlist('graph/big_graph.adjlist')
+    # print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
+    # nodes_to_remove = [n for n in g.nodes() if g.degree(n) < 100]
+    # g.remove_nodes_from(nodes_to_remove)
+    # print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
+    #
+    # # random_nodes = random.choices(list(g.nodes()), k=100)
+    # # g_100 = nx.subgraph(g, random_nodes)
+    # g.remove_nodes_from(list(nx.isolates(g)))
+    # print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
+    # nx.draw(g, with_labels=True)
     # plt.show()
+    #
+    # maximal_c1 = nx.find_cliques(g)
+    # maximal_c1 = [mc for mc in maximal_c1 if len(mc) > 2]
+    # print(len(list(maximal_c1)))
+    # print('bk1:')
+    # bron_kerbosch(g, list(g.nodes()))
+    # print('\nbk2:')
+    # bron_kerbosch_with_pivot(g, list(g.nodes()))
+    # print('\nbk3:')
+    # bron_kerbosch_degeneracy(g)
+
+    # ------------------------------------------------------------------------------------------------------------------
+    # generate a random graph of 100 nodes and execute bron-kerbosch
+
+    random_graph = nx.fast_gnp_random_graph(10, 0.3)
+    nx.draw(random_graph, with_labels=True)
+    plt.show()
     #
     # print('bk1:')
     # start = time.time()
@@ -274,5 +309,6 @@ if __name__ == '__main__':
     #
     # mc = get_max_clique2(random_graph)
     # print(f'\nMax Clique method 2: {mc}')
-    # # cc = sorted(nx.connected_components(random_graph), key=len, reverse=True)
-    # # print(cc)
+
+    deg_order_hash(random_graph)
+

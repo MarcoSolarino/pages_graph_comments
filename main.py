@@ -176,33 +176,52 @@ def degeneracy_order(graph):
 
 
 def build_neighbors_dict(graph):
+    """
+    build a dictionary (hash) with key = degree of a node values = list of nodes with key-degree
+    :param graph: NetworkX graph
+    :return: OrderedDict, the dictionary ordered by key values
+    """
+    # build empty dictionary
     hash_neighbors = {}
-    num_neighbors = np.array(
-        [(len(list(graph.neighbors(node))), node) for node in (graph.nodes())])
+    # build a np-array of couples (degree, node)
+    num_neighbors = np.array([(len(list(graph.neighbors(node))), node) for node in (graph.nodes())])
     for n in num_neighbors:
+        # the key is the degree of the node, the value is the node itself
         key, value = int(n[0]), n[1]
         if key in hash_neighbors:
             hash_neighbors[key] = np.append(hash_neighbors[key], value)
         else:
             hash_neighbors[key] = np.array([value])
+    # ordering the dictionary by its key values
     hash_neighbors = collections.OrderedDict(sorted(hash_neighbors.items()))
     return hash_neighbors
 
 
 def deg_order_hash(graph):
+    """
+    This is a greedy algorithm for computing the degeneracy ordering of a graph. At each iterations it choose the node
+    with the smallest degree
+    :param graph: NetworkX graph
+    :return: np-array, the degeneracy order of the graph
+    """
     node_degrees = build_neighbors_dict(graph)
     deg_order = np.empty(0)
-    d = 0
+    degree = 0
     graph_copy = graph.copy()
+    # loop until deg_order is complete
     while len(deg_order) < len(list(graph.nodes())):
+        # select the smallest key
         smallest_degree = int((list(node_degrees.keys()))[0])
-        if d < smallest_degree:
-            d = smallest_degree
+        # update degree which is the maximum of the degrees of the nodes at the time they are removed from the graph
+        if degree < smallest_degree:
+            degree = smallest_degree
+        # pop the last node in the list
         node = (node_degrees[smallest_degree])[-1]
         node_degrees.update({smallest_degree: np.delete(node_degrees[smallest_degree],
-                                                       np.where(node_degrees[smallest_degree] == node))})
+                                                        np.where(node_degrees[smallest_degree] == node))})
         if len(node_degrees[smallest_degree]) == 0:
             node_degrees.pop(smallest_degree)
+
         deg_order = np.append(deg_order, node)
 
         # update dictionary for every neighbor of node
@@ -217,8 +236,9 @@ def deg_order_hash(graph):
                 node_degrees.update({key: np.append(node_degrees[key], nn)})
             else:
                 node_degrees[key] = np.array([nn])
+                node_degrees = collections.OrderedDict(sorted(node_degrees.items()))
         graph_copy.remove_node(node)
-    print(f'degeneracy order for graph is {d}')
+    print(f'degeneracy order for graph is {degree}')
     return deg_order
 
 
@@ -296,36 +316,36 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------------------------------------------------------
     # read graph and execute bron-kerbosch
 
-    g = nx.readwrite.read_adjlist('graph/big_graph.adjlist')
-    print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
-    nodes_to_remove = [n for n in g.nodes() if g.degree(n) < 100]
-    g.remove_nodes_from(nodes_to_remove)
-    print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
-
-    # random_nodes = random.choices(list(g.nodes()), k=100)
-    # g_100 = nx.subgraph(g, random_nodes)
-    g.remove_nodes_from(list(nx.isolates(g)))
-    print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
-    nx.draw(g, with_labels=True)
-    plt.show()
-
-    maximal_c1 = nx.find_cliques(g)
-    maximal_c1 = [mc for mc in maximal_c1 if len(mc) > 2]
-    print(len(list(maximal_c1)))
-    print('bk1:')
-    bron_kerbosch(g, list(g.nodes()))
-    print('\nbk2:')
-    bron_kerbosch_with_pivot(g, list(g.nodes()))
-    print('\nbk3:')
-    bron_kerbosch_degeneracy(g)
+    # g = nx.readwrite.read_adjlist('graph/big_graph.adjlist')
+    # print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
+    # nodes_to_remove = [n for n in g.nodes() if g.degree(n) < 100]
+    # g.remove_nodes_from(nodes_to_remove)
+    # print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
+    #
+    # # random_nodes = random.choices(list(g.nodes()), k=100)
+    # # g_100 = nx.subgraph(g, random_nodes)
+    # g.remove_nodes_from(list(nx.isolates(g)))
+    # print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
+    # nx.draw(g, with_labels=True)
+    # plt.show()
+    #
+    # maximal_c1 = nx.find_cliques(g)
+    # maximal_c1 = [mc for mc in maximal_c1 if len(mc) > 2]
+    # print(len(list(maximal_c1)))
+    # print('bk1:')
+    # bron_kerbosch(g, list(g.nodes()))
+    # print('\nbk2:')
+    # bron_kerbosch_with_pivot(g, list(g.nodes()))
+    # print('\nbk3:')
+    # bron_kerbosch_degeneracy(g)
 
     # ------------------------------------------------------------------------------------------------------------------
     # generate a random graph of 100 nodes and execute bron-kerbosch
 
-    # random_graph = nx.fast_gnp_random_graph(10, 0.3)
-    # nx.draw(random_graph, with_labels=True)
-    # plt.show()
-    #
+    random_graph = nx.fast_gnp_random_graph(100, 0.3)
+    nx.draw(random_graph, with_labels=True)
+    plt.show()
+
     # print('bk1:')
     # start = time.time()
     # bron_kerbosch(graph=random_graph, p=list(random_graph.nodes()))
@@ -345,10 +365,10 @@ if __name__ == '__main__':
     # mc = get_max_clique2(random_graph)
     # print(f'\nMax Clique method 2: {mc}')
 
-    # start = time.time()
-    # print(deg_order_hash(random_graph))
-    # print(f'Time for degeneracy ordering using dictionaries: {time.time() - start}')
-    # start = time.time()
-    # print(degeneracy_order(random_graph))
-    # print(f'Time for degeneracy ordering NOT using dictionaries: {time.time() - start}')
+    start = time.time()
+    print(deg_order_hash(random_graph))
+    print(f'Time for degeneracy ordering using dictionaries: {time.time() - start}')
+    start = time.time()
+    print(degeneracy_order(random_graph))
+    print(f'Time for degeneracy ordering NOT using dictionaries: {time.time() - start}')
 

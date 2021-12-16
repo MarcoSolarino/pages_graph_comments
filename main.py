@@ -70,6 +70,29 @@ def find_edges(ids, sequences):
     return edges
 
 
+def find_maximal_clique(graph, node):
+    """
+    Find a single maximal clique (if exist) which contains node. This algorithm works in a similar way of the
+    Born-Kerbosh algorithm, but it is not recursive and stops after one maximal clique is found
+    (if there is one that includes node).
+    :param graph: NetworkX graph
+    :param node: node of the graph
+    :return: np-array of the maximal clique or an empty np-array
+    """
+    p = np.array(list(graph.neighbors(node)))
+    r = np.empty(0)
+    r = np.append(r, node)
+    while len(p) != 0:
+        nn = find_pivot(graph, p, [])
+        nn_neighbors = np.array(list(graph.neighbors(nn)))
+        r = np.append(r, nn)
+        p = np.intersect1d(p, nn_neighbors)
+    if len(r) > 2:
+        return r
+    else:
+        return np.empty(0)
+
+
 def bron_kerbosch(graph, p, r=np.empty(0), x=np.empty(0), verbose=True):
     """
     Executes Bron-Kerbosch algorithm with no pivoting ant prints all the maximal cliques (with repetition).
@@ -107,10 +130,10 @@ def find_pivot(graph, p, x):
     num_neighbors = 0
     pivot = None
     for node in pux:
-        if len(list(graph.neighbors(node))) > num_neighbors:
+        neighbors_in_p = np.intersect1d(p, list(graph.neighbors(node)))  # get the number of neighbors of node in p
+        if len(neighbors_in_p) >= num_neighbors:
             pivot = node
-            neighbors_p = np.intersect1d(p, list(graph.neighbors(node)))  # get neighbors of node in p
-            num_neighbors = len(neighbors_p)
+            num_neighbors = len(neighbors_in_p)
     return pivot
 
 
@@ -137,42 +160,6 @@ def bron_kerbosch_with_pivot(graph, p, r=np.empty(0), x=np.empty(0), verbose=Tru
         p = np.delete(p, np.where(p == v))
         x = np.union1d(x, v)
     return
-
-
-def degeneracy_order(graph):
-    """
-    Find a degeneracy order of the graph.
-    :param graph: networkx graph
-    :return: ndarray of the degeneracy ordering
-    """
-    d = 1
-    while d <= graph.number_of_nodes():
-        # print(f'order {d}')
-        subgraph = graph.copy()
-        deg_order = np.empty(0)
-
-        while subgraph is not None:
-            # np array that stores node indexes and their num of neighbors
-            num_neighbors = np.array(
-                [(node, len(list(subgraph.neighbors(node)))) for node in (subgraph.nodes())])
-            # deleting nodes with more num_neighbors > d
-            num_neighbors = np.delete(num_neighbors, np.where(num_neighbors[:, 1] > d)[0], axis=0)
-            if len(num_neighbors) == 0:
-                subgraph = None
-                deg_order = np.empty(0)
-            else:
-                num_neighbors = np.sort(num_neighbors, axis=0)
-                id, __ = num_neighbors[-1]
-                deg_order = np.append(deg_order, id)
-
-                # remove node from graph
-                subgraph.remove_node(id)
-                if len(list(subgraph.nodes())) == 0:
-                    subgraph = None
-        if deg_order.any():
-            print(f'Degeneracy order for graph is {d}')
-            return deg_order
-        d += 1
 
 
 def build_neighbors_dict(graph):
@@ -291,7 +278,7 @@ def get_max_clique2(graph):
     :return: ndarray of a max clique
     """
     max_clique = np.empty(0)
-    deg_order = degeneracy_order(graph)
+    deg_order = deg_order_hash(graph)
     nodes = np.array(list(graph.nodes))
     for v in deg_order:
         v_neighbors = np.array(list(graph.neighbors(v)))
@@ -342,7 +329,7 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------------------------------------------------------
     # generate a random graph of 100 nodes and execute bron-kerbosch
 
-    random_graph = nx.fast_gnp_random_graph(100, 0.3)
+    random_graph = nx.fast_gnp_random_graph(10, 0.4)
     nx.draw(random_graph, with_labels=True)
     plt.show()
 
@@ -365,10 +352,14 @@ if __name__ == '__main__':
     # mc = get_max_clique2(random_graph)
     # print(f'\nMax Clique method 2: {mc}')
 
-    start = time.time()
-    print(deg_order_hash(random_graph))
-    print(f'Time for degeneracy ordering using dictionaries: {time.time() - start}')
-    start = time.time()
-    print(degeneracy_order(random_graph))
-    print(f'Time for degeneracy ordering NOT using dictionaries: {time.time() - start}')
+    # start = time.time()
+    # print(deg_order_hash(random_graph))
+    # print(f'Time for degeneracy ordering using dictionaries: {time.time() - start}')
+    # start = time.time()
+    # print(degeneracy_order(random_graph))
+    # print(f'Time for degeneracy ordering NOT using dictionaries: {time.time() - start}')
+
+    nodes = np.array(list(random_graph.nodes()))
+    node = find_pivot(random_graph, nodes, np.empty(0))
+    print(find_maximal_clique(random_graph, node))
 

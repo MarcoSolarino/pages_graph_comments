@@ -70,19 +70,21 @@ def find_edges(ids, sequences):
     return edges
 
 
-def find_maximal_clique(graph, node):
+def find_maximal_clique(graph, n):
     """
     Find a single maximal clique (if exist) which contains node. This algorithm works in a similar way of the
     Born-Kerbosh algorithm, but it is not recursive and stops after one maximal clique is found
     (if there is one that includes node).
     :param graph: NetworkX graph
-    :param node: node of the graph
+    :param n: node of the graph
     :return: np-array of the maximal clique or an empty np-array
     """
-    p = np.array(list(graph.neighbors(node)))
+    p = np.array(list(graph.neighbors(n)))
     r = np.empty(0)
-    r = np.append(r, node)
+    r = np.append(r, n)
     while len(p) != 0:
+        # choosing one of the nodes having more neighbors in p. This guarantees to find a non-trivial maximal clique
+        # containing n (if it exists) but does not guarantee that such maximal clique has the maximum size possible
         nn = find_pivot(graph, p, [])
         nn_neighbors = np.array(list(graph.neighbors(nn)))
         r = np.append(r, nn)
@@ -303,35 +305,42 @@ if __name__ == '__main__':
     # ------------------------------------------------------------------------------------------------------------------
     # read graph and execute bron-kerbosch
 
-    # g = nx.readwrite.read_adjlist('graph/big_graph.adjlist')
-    # print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
-    # nodes_to_remove = [n for n in g.nodes() if g.degree(n) < 100]
-    # g.remove_nodes_from(nodes_to_remove)
-    # print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
-    #
-    # # random_nodes = random.choices(list(g.nodes()), k=100)
-    # # g_100 = nx.subgraph(g, random_nodes)
-    # g.remove_nodes_from(list(nx.isolates(g)))
-    # print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
-    # nx.draw(g, with_labels=True)
-    # plt.show()
-    #
-    # maximal_c1 = nx.find_cliques(g)
-    # maximal_c1 = [mc for mc in maximal_c1 if len(mc) > 2]
-    # print(len(list(maximal_c1)))
-    # print('bk1:')
-    # bron_kerbosch(g, list(g.nodes()))
-    # print('\nbk2:')
-    # bron_kerbosch_with_pivot(g, list(g.nodes()))
-    # print('\nbk3:')
-    # bron_kerbosch_degeneracy(g)
+    g = nx.readwrite.read_adjlist('graph/big_graph.adjlist')
+    print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
+
+    nodes_to_remove = [n for n in g.nodes() if g.degree(n) < 100]
+    g.remove_nodes_from(nodes_to_remove)
+    print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
+
+    # random_nodes = random.choices(list(g.nodes()), k=100)
+    # g_100 = nx.subgraph(g, random_nodes)
+    g.remove_nodes_from(list(nx.isolates(g)))
+    print(f'g nodes = {g.number_of_nodes()}  g edges = {g.number_of_edges()}')
+    nx.draw(g, with_labels=True)
+    plt.show()
+
+    nodes = np.array(list(g.nodes()))
+    pivot_node = find_pivot(g, nodes, np.empty(0))
+    print(find_maximal_clique(g, pivot_node))
+
+    maximal_c1 = nx.find_cliques(g)
+    maximal_c1 = [mc for mc in maximal_c1 if len(mc) > 2]
+    print(len(list(maximal_c1)))
+    print('bk1:')
+    bron_kerbosch(g, list(g.nodes()))
+    print('\nbk2:')
+    bron_kerbosch_with_pivot(g, list(g.nodes()))
+    print('\nbk3:')
+    bron_kerbosch_degeneracy(g)
+
+    print(f'max clique = {get_max_clique(g, p=list(g.nodes()))}')
 
     # ------------------------------------------------------------------------------------------------------------------
     # generate a random graph of 100 nodes and execute bron-kerbosch
 
-    random_graph = nx.fast_gnp_random_graph(10, 0.4)
-    nx.draw(random_graph, with_labels=True)
-    plt.show()
+    # random_graph = nx.fast_gnp_random_graph(10, 0.4)
+    # nx.draw(random_graph, with_labels=True)
+    # plt.show()
 
     # print('bk1:')
     # start = time.time()
@@ -359,7 +368,8 @@ if __name__ == '__main__':
     # print(degeneracy_order(random_graph))
     # print(f'Time for degeneracy ordering NOT using dictionaries: {time.time() - start}')
 
-    nodes = np.array(list(random_graph.nodes()))
-    node = find_pivot(random_graph, nodes, np.empty(0))
-    print(find_maximal_clique(random_graph, node))
+    # nodes = np.array(list(random_graph.nodes()))
+    # pivot_node = find_pivot(random_graph, nodes, np.empty(0))
+    # print(find_maximal_clique(random_graph, pivot_node))
+    # print(get_max_clique(random_graph, p=list(random_graph.neighbors(pivot_node)), r=np.array(pivot_node)))
 

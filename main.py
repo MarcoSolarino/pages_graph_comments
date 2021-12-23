@@ -250,7 +250,7 @@ def bron_kerbosch_degeneracy(graph):
         second_half_nodes = np.delete(second_half_nodes, np.where(second_half_nodes == v))
         p = np.intersect1d(v_neighbors, first_half_nodes)
         x = np.intersect1d(v_neighbors, second_half_nodes)
-        bron_kerbosch_with_pivot(graph, p, v, x)
+        bron_kerbosch_with_pivot(graph, p, np.array([v]), x)
 
 
 def get_max_clique(graph, p, r=np.empty(0), x=np.empty(0)):
@@ -304,7 +304,7 @@ if __name__ == '__main__':
     nx.draw(random_graph, with_labels=True)
     plt.show()
 
-    nodes = np.array(list(random_graph.nodes()))
+    nodes = list(random_graph.nodes())
     # choosing the node with the highest degree to improve the probability to find a non-trivial maximal clique
     pivot_node = find_pivot(random_graph, nodes, np.empty(0))
     print(f' Maximal Clique including node {pivot_node} : {find_maximal_clique(random_graph, pivot_node)}')

@@ -326,7 +326,5 @@ if __name__ == '__main__':
     print(f'\nTime: {time.time() - start} s')
 
     print("---------------------------------------------------------------------------")
-    start = time.time()
     mc = get_max_clique(random_graph, p=list(random_graph.nodes()))
-    print(f'Max Clique method 1: {mc}')
-    print(f'Time: {time.time() - start} s')
+    print(f'Maximal Clique with max size: {mc}')

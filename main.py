@@ -72,8 +72,8 @@ def find_edges(ids, sequences):
 
 def find_maximal_clique(graph, n):
     """
-    Find a single maximal clique (if exist) which contains node n. This algorithm works in a similar way of the
-    Born-Kerbosh algorithm, but it is not recursive and stops after one maximal clique is found
+    Find a single maximal clique (if it exists) which contains node n. This algorithm works in a similar way of the
+    Bron-Kerbosh algorithm, but it is not recursive and stops after one maximal clique is found
     (if there is one that includes node n).
     :param graph: NetworkX graph
     :param n: node of the graph
@@ -216,17 +216,21 @@ def degeneracy_order(graph):
         # update dictionary for every neighbor of node: move each neighbor in the previous list
         node_neighbors = list(graph_copy.neighbors(node))
         for nn in node_neighbors:
+            # the key will be the degree of the node
             key = len(list(graph_copy.neighbors(nn)))
             node_degrees.update({key: np.delete(node_degrees[key], np.where(node_degrees[key] == nn))})
 
+            # reduce the degree of nn by one (move it to the list in the previous position
             key -= 1
             if key in node_degrees:
                 node_degrees.update({key: np.append(node_degrees[key], nn)})
+            # if the key does not exist we need to add it to the dictionary and sort it again
             else:
                 node_degrees[key] = np.array([nn])
                 node_degrees = collections.OrderedDict(sorted(node_degrees.items()))
+        # remove the node from the graph
         graph_copy.remove_node(node)
-    print(f'degeneracy order for graph is {degree}')
+    print(f'\ndegeneracy order for graph is {degree}')
     return deg_order
 
 
@@ -305,39 +309,51 @@ if __name__ == '__main__':
     # read previously saved graph, this graph is sparse, selecting random subgraphs from it leads to a graph
     # without maximal cliques
 
-    # g = nx.readwrite.read_adjlist('graph/big_graph.adjlist')
-    # print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
-    # density = g.number_of_edges() / (g.number_of_nodes() * (g.number_of_nodes() - 1))
-    # print(f'The density of the graph is {density}')
+    g = nx.readwrite.read_adjlist('graph/big_graph.adjlist')
+    print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
+    density = g.number_of_edges() / ((g.number_of_nodes() * (g.number_of_nodes() - 1))/2)
+    print(f'The density of the graph is {density}')
+    print("---------------------------------------------------------------------------------")
 
     # ------------------------------------------------------------------------------------------------------------------
     # generate a random graph of 100 nodes and execute bron-kerbosch
 
+    print("Using a random graph with 100 nodes:\n")
     random_graph = nx.fast_gnp_random_graph(100, 0.4)
     nx.draw(random_graph, with_labels=True)
     plt.show()
 
     nodes = np.array(list(random_graph.nodes()))
+    # choosing the node with the highest degree to improve the probability to find a non-trivial maximal clique
     pivot_node = find_pivot(random_graph, nodes, np.empty(0))
     print(f' Maximal Clique including node {pivot_node} : {find_maximal_clique(random_graph, pivot_node)}')
 
-    print('bk1:')
+    print("---------------------------------------------------------------------------")
+    print('Executing Bron-Kerbosch without pivoting:')
     start = time.time()
     bron_kerbosch(graph=random_graph, p=list(random_graph.nodes()))
     print(f'\nTime: {time.time() - start} s')
-    print('\nbk2:')
+    print("---------------------------------------------------------------------------")
+    print('Executing Bron-Kerbosch with pivoting::')
     start = time.time()
     bron_kerbosch_with_pivot(graph=random_graph, p=list(random_graph.nodes()))
     print(f'\nTime: {time.time() - start} s')
-    print('\nbk3')
+    print("---------------------------------------------------------------------------")
+    print('Executing Bron-Kerbosch using a degeneracy order of the nodes:')
     start = time.time()
     bron_kerbosch_degeneracy(random_graph)
     print(f'\nTime: {time.time() - start} s')
 
+    print("---------------------------------------------------------------------------")
+    start = time.time()
     mc = get_max_clique(random_graph, p=list(random_graph.nodes()))
-    print(f'\nMax Clique method 1: {mc}')
+    print(f'Max Clique method 1: {mc}')
+    print(f'Time: {time.time() - start} s')
 
+    print("---------------------------------------------------------------------------")
+    start = time.time()
     mc = get_max_clique2(random_graph)
-    print(f'\nMax Clique method 2: {mc}')
+    print(f'Max Clique method 2: {mc}')
+    print(f'Time: {time.time() - start} s')
 
 

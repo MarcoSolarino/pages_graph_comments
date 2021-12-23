@@ -276,27 +276,6 @@ def get_max_clique(graph, p, r=np.empty(0), x=np.empty(0)):
     return max_clique
 
 
-def get_max_clique2(graph):
-    """
-    Search a max clique between all maximal cliques using Bron-Kerbosch using a degeneracy order.
-    :param graph: networkx graph
-    :return: ndarray of a max clique
-    """
-    max_clique = np.empty(0)
-    deg_order = degeneracy_order(graph)
-    nodes = np.array(list(graph.nodes))
-    for v in deg_order:
-        v_neighbors = np.array(list(graph.neighbors(v)))
-        first_half_nodes, second_half_nodes = np.hsplit(nodes, np.where(nodes == v)[0])
-        second_half_nodes = np.delete(second_half_nodes, np.where(second_half_nodes == v))
-        p = np.intersect1d(v_neighbors, first_half_nodes)
-        x = np.intersect1d(v_neighbors, second_half_nodes)
-        clique = get_max_clique(graph, p, v, x)
-        if len(clique) > len(max_clique):
-            max_clique = clique
-    return max_clique
-
-
 if __name__ == '__main__':
     # generate graph and save it
 
@@ -349,11 +328,3 @@ if __name__ == '__main__':
     mc = get_max_clique(random_graph, p=list(random_graph.nodes()))
     print(f'Max Clique method 1: {mc}')
     print(f'Time: {time.time() - start} s')
-
-    print("---------------------------------------------------------------------------")
-    start = time.time()
-    mc = get_max_clique2(random_graph)
-    print(f'Max Clique method 2: {mc}')
-    print(f'Time: {time.time() - start} s')
-
-

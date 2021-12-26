@@ -60,9 +60,11 @@ def find_edges(ids, sequences):
     """
     edges = np.empty((0, 2))
     for s in sequences:
+        # query id
         qid = re.search('A[0-9]{6}', (s["query"])).group()
         if 'comment' in s['results'][0]:
             comments = (s["results"][0])["comment"]
+            # parse comments
             for c in comments:
                 references = re.findall('A[0-9]{6}', c)
                 for n in references:
@@ -148,7 +150,7 @@ def bron_kerbosch_with_pivot(graph, p, r=np.empty(0), x=np.empty(0), verbose=Tru
     :param p: list of nodes
     :param r: list of nodes candidates to be a maximal clique
     :param x: list of nodes already explored
-    :param verbose: bool if True the method prints all te maximal cliques
+    :param verbose: bool if True the method prints all the maximal cliques
     :return:
     """
     if len(p) == 0 and len(x) == 0:
@@ -196,8 +198,8 @@ def degeneracy_order(graph):
     :return: np-array, the degeneracy order of the graph
     """
     node_degrees = build_neighbors_dict(graph)
-    deg_order = np.empty(0)
-    degree = 0
+    deg_order = np.empty(0)  # the degeneracy order to be returned
+    degeneracy = 0  # the degeneracy of the graph
     graph_copy = graph.copy()
     # loop until deg_order is complete
     while len(deg_order) < len(list(graph.nodes())):
@@ -205,9 +207,11 @@ def degeneracy_order(graph):
         smallest_degree = int((list(node_degrees.keys()))[0])
         while smallest_degree not in node_degrees or len(node_degrees[smallest_degree]) == 0:
             smallest_degree += 1
-        # update degree which is the maximum of the degrees of the nodes at the time they are removed from the graph
-        if degree < smallest_degree:
-            degree = smallest_degree
+
+        # update degeneracy which is the maximum degree of the nodes at the time they are removed from the graph
+        if degeneracy < smallest_degree:
+            degeneracy = smallest_degree
+
         # pop the last node in the list
         node = (node_degrees[smallest_degree])[-1]
         node_degrees.update({smallest_degree: np.delete(node_degrees[smallest_degree],
@@ -232,7 +236,7 @@ def degeneracy_order(graph):
                 node_degrees = collections.OrderedDict(sorted(node_degrees.items()))
         # remove the node from the graph
         graph_copy.remove_node(node)
-    print(f'\ndegeneracy order for graph is {degree}')
+    print(f'\ndegeneracy order for graph is {degeneracy}')
     return deg_order
 
 
@@ -296,13 +300,6 @@ if __name__ == '__main__':
     print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
     density = g.number_of_edges() / ((g.number_of_nodes() * (g.number_of_nodes() - 1))/2)
     print(f'The density of the graph is {density}')
-
-    pivot_node = find_pivot(g, list(g.nodes()), np.empty(0))
-    find_maximal_clique(g, pivot_node)
-    print(bron_kerbosch(graph=g, p=list(g.nodes)))
-    print(bron_kerbosch_with_pivot(graph=g, p=list(g.nodes)))
-    print(bron_kerbosch_degeneracy(graph=g))
-
     print("----------------------------------------------------------------------------")
 
     # ------------------------------------------------------------------------------------------------------------------

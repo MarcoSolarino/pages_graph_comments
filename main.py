@@ -279,28 +279,38 @@ def get_max_clique(graph, p, r=np.empty(0), x=np.empty(0)):
 
 
 if __name__ == '__main__':
-    # generate graph and save it
+    # generate graph
+    limit = 1000  # the number of sequences used to build the graph. Set it to 0 to use them all (it will take a while)
+    g = generate_graph(limit)
 
-    # g = generate_graph(0)
+    # if you want you can remove the nodes with no edges using this line
     # g.remove_nodes_from(list(nx.isolates(g)))
-    # print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
+
+    # save the graph as an adjlist
     # nx.readwrite.write_adjlist(g, 'graph/big_graph.adjlist')
 
-    # ------------------------------------------------------------------------------------------------------------------
-    # read previously saved graph, this graph is sparse, selecting random subgraphs from it leads to a graph
-    # without maximal cliques
+    # read previously saved graph
+    # g = nx.readwrite.read_adjlist('graph/big_graph.adjlist')
 
-    g = nx.readwrite.read_adjlist('graph/big_graph.adjlist')
+    # this graph is sparse, it has no maximal cliques with high probability
     print(f'graph nodes = {g.number_of_nodes()}  graph edges = {g.number_of_edges()}')
     density = g.number_of_edges() / ((g.number_of_nodes() * (g.number_of_nodes() - 1))/2)
     print(f'The density of the graph is {density}')
-    print("---------------------------------------------------------------------------------")
+
+    pivot_node = find_pivot(g, list(g.nodes()), np.empty(0))
+    find_maximal_clique(g, pivot_node)
+    print(bron_kerbosch(graph=g, p=list(g.nodes)))
+    print(bron_kerbosch_with_pivot(graph=g, p=list(g.nodes)))
+    print(bron_kerbosch_degeneracy(graph=g))
+
+    print("----------------------------------------------------------------------------")
 
     # ------------------------------------------------------------------------------------------------------------------
-    # generate a random graph of 100 nodes and execute bron-kerbosch
+    # generate a random graph and execute bron-kerbosch
 
-    print("Using a random graph with 100 nodes:\n")
-    random_graph = nx.fast_gnp_random_graph(100, 0.4)
+    num_nodes = 100
+    print(f"Using a random graph with {num_nodes} nodes:\n")
+    random_graph = nx.fast_gnp_random_graph(num_nodes, 0.4)
     nx.draw(random_graph, with_labels=True)
     plt.show()
 

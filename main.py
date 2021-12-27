@@ -37,12 +37,13 @@ def get_sequences(limit):
 def generate_graph(limit=100):
     """
     Generates graph from sequences given by get_sequences().
-    :param limit: integer the numer of sequences taken randomly from all sequences
+    :param limit: integer. the number of sequences taken randomly from all sequences used to build the graph
     :return: networkx graph build from sequences
     """
     sequences = get_sequences(limit)
     graph = nx.Graph()  # empty graph
 
+    # search strings starting with "A" followed by six digits
     ids = np.array([re.search('A[0-9]{6}', (s["query"])).group() for s in sequences])  # get all ids
     graph.add_nodes_from(ids)  # add all nodes at once
 
@@ -64,7 +65,7 @@ def find_edges(ids, sequences):
         qid = re.search('A[0-9]{6}', (s["query"])).group()
         if 'comment' in s['results'][0]:
             comments = (s["results"][0])["comment"]
-            # parse comments
+            # parse all the comments of the sequence
             for c in comments:
                 references = re.findall('A[0-9]{6}', c)
                 for n in references:
@@ -200,8 +201,9 @@ def degeneracy_order(graph):
     node_degrees = build_neighbors_dict(graph)
     deg_order = np.empty(0)  # the degeneracy order to be returned
     degeneracy = 0  # the degeneracy of the graph
-    graph_copy = graph.copy()
-    # loop until deg_order is complete
+    graph_copy = graph.copy()  # copy of the graph from which the nodes will e removed
+
+    # loop until deg_order is complete (all the nodes are ordered)
     while len(deg_order) < len(list(graph.nodes())):
         # select the smallest key, which is the smallest key that holds a non-empty list of nodes
         smallest_degree = int((list(node_degrees.keys()))[0])
@@ -236,7 +238,7 @@ def degeneracy_order(graph):
                 node_degrees = collections.OrderedDict(sorted(node_degrees.items()))
         # remove the node from the graph
         graph_copy.remove_node(node)
-    print(f'\ndegeneracy order for graph is {degeneracy}')
+    print(f'\nThe degeneracy order of the graph is {degeneracy}')
     return deg_order
 
 
@@ -308,8 +310,9 @@ if __name__ == '__main__':
     num_nodes = 100
     print(f"Using a random graph with {num_nodes} nodes:\n")
     random_graph = nx.fast_gnp_random_graph(num_nodes, 0.4)
-    nx.draw(random_graph, with_labels=True)
-    plt.show()
+    # if you want to plot the graph use these lines below
+    # nx.draw(random_graph, with_labels=True)
+    # plt.show()
 
     nodes = list(random_graph.nodes())
     # choosing the node with the highest degree to improve the probability to find a non-trivial maximal clique
